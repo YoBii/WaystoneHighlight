@@ -13,34 +13,32 @@ using System.Windows.Forms;
 using ExileCore2.PoEMemory;
 using ItemFilterLibrary;
 
-namespace WaystoneHighlight
-{
-    public class WaystoneHighlight : BaseSettingsPlugin<WaystoneHighlightSettings>
-    {
+
+namespace WaystoneHighlight {
+    public class WaystoneHighlight : BaseSettingsPlugin<WaystoneHighlightSettings> {
         private IngameState InGameState => GameController.IngameState;
         private List<string> BannedModifiers;
+        private List<string> BadModifiers;
 
-        // Parse banned modifiers from settings.
-        private void ParseBannedModifiers()
-        {
-            BannedModifiers = Settings.Score.BannedModifiers.Value
-                .Split(',')
+        private List<string> ParseModifiers(string input) {
+            List<string> mods = input
+                .Split(",")
                 .Select(x => x.Trim().ToLower())
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToList();
+            return mods;
         }
 
-        public override bool Initialise()
-        {
-            // Reload banned modifiers when the setting is pressed.
-            Settings.Score.ReloadBannedModifiers.OnPressed = ParseBannedModifiers;
-            ParseBannedModifiers();
+        public override bool Initialise() {
+            BannedModifiers = ParseModifiers(Settings.Score.BannedModifiers.Value);
+            BadModifiers = ParseModifiers(Settings.Score.BadModifiers.Value);
+            //Settings.Score.ReloadBannedModifiers.OnPressed = () => { BannedModifiers = ParseModifiers(Settings.Score.BannedModifiers.Value); };
+            Settings.Score.ReloadBadAndBannedModifiers.OnPressed += () => { Initialise(); };
             return base.Initialise();
         }
 
-        public override void Render()
-        {
-            var waystones = new List<WaystoneItem>();
+        public override void Render() {
+            IList<WaystoneItem> waystones = [];
 
             var stashPanel = InGameState.IngameUi.StashElement;
             var guildStashPanel = InGameState.IngameUi.GuildStashElement;
@@ -48,8 +46,7 @@ namespace WaystoneHighlight
 
             bool isQuadTab = false;
 
-            if (inventoryPanel.IsVisible)
-            {
+            if (inventoryPanel.IsVisible) {
                 // ----- Normal Stash -----
                 if (stashPanel != null && stashPanel.VisibleStash != null && stashPanel.VisibleStash.IsVisible)
                 {
@@ -162,6 +159,7 @@ namespace WaystoneHighlight
                     bool extraRareMod = false;
                     int packSize = 0, magicPackSize = 0, extraPacks = 0, extraMagicPack = 0, extraRarePack = 0, additionalPacks = 0;
                     bool hasBannedMod = false;
+                    int badMods = 0;
                     bool isCorrupted = waystone.baseComponent.isCorrupted;
 
                     foreach (var mod in waystone.mods.ItemMods)
@@ -172,6 +170,17 @@ namespace WaystoneHighlight
                         {
                             hasBannedMod = true;
                             break;
+                        }
+
+                        // Check for bad modifiers
+                        if (BadModifiers.Count > 0) {
+                            foreach (var badMod in BadModifiers) {
+
+                                if (mod.DisplayName.Contains(badMod, StringComparison.OrdinalIgnoreCase)) {
+                                    badMods++;
+                                    break;
+                                }
+                            }
                         }
 
                         switch (mod.Name)
@@ -236,7 +245,7 @@ namespace WaystoneHighlight
                         score += Settings.Score.ScoreForExtraRareMonsterModifier;
 
                     // Draw highlight overlay based on banned mods and score.
-                    if (hasBannedMod)
+                    if (hasBannedMod || badMods >= 2)
                     {
                         switch (Settings.Graphics.BannedHightlightStyle)
                         {
@@ -248,30 +257,37 @@ namespace WaystoneHighlight
                                 break;
                         }
                     }
-                    else if (score >= Settings.Score.MinimumCraftHighlightScore)
-                    {
-                        if (prefixCount < 3 && !isCorrupted)
-                        {
-                            switch (Settings.Graphics.CraftHightlightStyle)
-                            {
-                                case 1:
-                                    DrawBorderHighlight(bbox, Settings.Graphics.CraftHighlightColor, Settings.Graphics.BorderHighlight.CraftBorderThickness.Value);
-                                    break;
-                                case 2:
-                                    DrawBoxHighlight(bbox, Settings.Graphics.CraftHighlightColor, Settings.Graphics.BoxHighlight.CraftBoxRounding.Value);
-                                    break;
-                            }
-                        }
-                        else if (score >= Settings.Score.MinimumRunHighlightScore)
-                        {
-                            switch (Settings.Graphics.RunHightlightStyle)
-                            {
-                                case 1:
-                                    DrawBorderHighlight(bbox, Settings.Graphics.RunHighlightColor, Settings.Graphics.BorderHighlight.RunBorderThickness.Value);
-                                    break;
-                                case 2:
-                                    DrawBoxHighlight(bbox, Settings.Graphics.RunHighlightColor, Settings.Graphics.BoxHighlight.RunBoxRounding.Value);
-                                    break;
+                    else {
+                        if (score >= Settings.Score.MinimumCraftHighlightScore) {
+                            if (prefixCount < 3 && !isCorrupted) {
+                                switch (Settings.Graphics.CraftHightlightStyle) {
+                                    case 1:
+                                        DrawBorderHighlight(bbox, Settings.Graphics.CraftHighlightColor, Settings.Graphics.BorderHighlight.CraftBorderThickness.Value);
+                                        break;
+                                    case 2:
+                                        DrawBoxHighlight(bbox, Settings.Graphics.CraftHighlightColor, Settings.Graphics.BoxHighlight.CraftBoxRounding.Value);
+                                        break;
+                                }
+                            } else if (score >= Settings.Score.MinimumRunHighlightScore) {
+                                if (badMods > 0) {
+                                    switch (Settings.Graphics.BadHightlightStyle) {
+                                        case 1:
+                                            DrawBorderHighlight(bbox, Settings.Graphics.BadHighlightColor, Settings.Graphics.BorderHighlight.BadBorderThickness);
+                                            break;
+                                        case 2:
+                                            DrawBoxHighlight(bbox, Settings.Graphics.BadHighlightColor, Settings.Graphics.BoxHighlight.BadBoxRounding.Value);
+                                            break;
+                                    }
+                                } else {
+                                    switch (Settings.Graphics.RunHightlightStyle) {
+                                        case 1:
+                                            DrawBorderHighlight(bbox, Settings.Graphics.RunHighlightColor, Settings.Graphics.BorderHighlight.RunBorderThickness.Value);
+                                            break;
+                                        case 2:
+                                            DrawBoxHighlight(bbox, Settings.Graphics.RunHighlightColor, Settings.Graphics.BoxHighlight.RunBoxRounding.Value);
+                                            break;
+                                    }
+                                }
                             }
                         }
                     }
@@ -357,7 +373,7 @@ namespace WaystoneHighlight
                     LogMessage("Returning Null Tab: ");
                     return null;
                 }
-                LogMessage("Tab Inside tier: " + (int)tabInsideTier.IndexInParent);
+                //LogMessage("Tab Inside tier: " + (int)tabInsideTier.IndexInParent);
                 int tabIndex = (int)tabInsideTier.IndexInParent;
 
                 return InGameState.IngameUi.StashElement.VisibleStash.Parent

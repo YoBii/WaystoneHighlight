@@ -61,12 +61,16 @@ public class ScoreSettings
     [Menu("Score per 1 additional pack of X monsters")]
     public RangeNode<int> ScorePerAdditionalPack { get; set; } = new RangeNode<int>(1, 0, 100);
 
-    [Menu("Banned modifiers", "List of mods you don't want to see, separated with ',' \n Locate them by alt-clicking on item and hovering over affix tier on the right")]
-    public TextNode BannedModifiers { get; set; } = new TextNode(
+    [Menu("Bad modifiers", "List of unfavored mods, separated with ','. Maps with more than one of these will be marked banned.\nLocate them by alt-clicking on item and hovering over affix tier on the right")]
+    public TextNode BadModifiers { get; set; } = new TextNode(
         "unwavering, penetration"
     );
+    [Menu("Banned modifiers", "List of mods you don't want to see, separated with ','\nLocate them by alt-clicking on item and hovering over affix tier on the right")]
+    public TextNode BannedModifiers { get; set; } = new TextNode(
+        "of flames"
+    );
     [JsonIgnore]
-    public ButtonNode ReloadBannedModifiers { get; set; } = new ButtonNode();
+    public ButtonNode ReloadBadAndBannedModifiers { get; set; } = new ButtonNode();
 
 }
 
@@ -79,6 +83,9 @@ public class GraphicSettings {
     [Menu("Craftable Waystone Highlight Color", "Highlight color for Craftable Waystones")]
     public ColorNode CraftHighlightColor { get; set; } = new ColorNode(Color.Yellow);
 
+    [Menu("Bad Modifiers Waystone Highlight Color", "Highlight color for Waystones with Banned Modifiers")]
+    public ColorNode BadHighlightColor { get; set; } = new ColorNode(Color.Orange);
+    
     [Menu("Banned Modifiers Waystone Highlight Color", "Highlight color for Waystones with Banned Modifiers")]
     public ColorNode BannedHighlightColor { get; set; } = new ColorNode(Color.Red);
 
@@ -87,6 +94,8 @@ public class GraphicSettings {
     public RangeNode<int> RunHightlightStyle { get; set; } = new RangeNode<int>(1, 1, 2);
     [Menu("Craftable Waystone Highlight Style", "1 = Broder; 2 = Filled box/dot")]
     public RangeNode<int> CraftHightlightStyle { get; set; } = new RangeNode<int>(1, 1, 2);
+    [Menu("Bad Waystone Highlight Style", "1 = Border; 2 = Filled box/dot")]
+    public RangeNode<int> BadHightlightStyle { get; set; } = new RangeNode<int>(1, 1, 2);
     [Menu("Banned Waystone Highlight Style", "1 = Border; 2 = Filled box/dot")]
     public RangeNode<int> BannedHightlightStyle { get; set; } = new RangeNode<int>(1, 1, 2);
 
@@ -107,6 +116,9 @@ public class BorderHighlightSettings {
     [Menu("Craftable Waystone Border Thickness", "Thickness of the Border of Craftable Waystones")]
     public RangeNode<int> CraftBorderThickness { get; set; } = new RangeNode<int>(1, 1, 5);
 
+    [Menu("Bad Modifiers Waystone Border Thickness", "Thickness of the Border of Waystones with bad Modifiers")]
+    public RangeNode<int> BadBorderThickness { get; set; } = new RangeNode<int>(1, 1, 5);
+    
     [Menu("Banned Modifiers Waystone Border Thickness", "Thickness of the Border of Waystones with Banned Modifiers")]
     public RangeNode<int> BannedBorderThickness { get; set; } = new RangeNode<int>(1, 1, 5);
 }
@@ -119,6 +131,9 @@ public class BoxHighlightSettings {
 
     [Menu("Craftable Waystone Box Rounding", "Rounding of the Box for Craftable Waystones")]
     public RangeNode<int> CraftBoxRounding { get; set; } = new RangeNode<int>(1, 1, 60);
+
+    [Menu("Bad Modifiers Waystone Box Rounding", "Rounding of the Box for Waystones with bad Modifiers")]
+    public RangeNode<int> BadBoxRounding { get; set; } = new RangeNode<int>(1, 1, 60);
 
     [Menu("Banned Modifiers Waystone Box Rounding", "Rounding of the Box for Waystones with Banned Modifiers")]
     public RangeNode<int> BannedBoxRounding { get; set; } = new RangeNode<int>(1, 1, 60);
